@@ -10,7 +10,7 @@ import io
 """
 
 OTP_HOME = "/opt/otp"
-TEST_HOME = "E:\GIT"
+TEST_HOME = "/opt"
 string = str
 
 
@@ -98,7 +98,7 @@ def obj_stats(objpath):
     Get permissions of a file
     """
     permiss = os.stat(objpath).st_mode
-    return permiss
+    return oct(permiss & 0o777)
 
 
 total_list = list_dir(TEST_HOME)
