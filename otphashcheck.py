@@ -4,14 +4,10 @@ import io
 
 """
 Модуль для проверки контрольных сумм (хэш md5).
-1. Создает контроьный список файлов эталонной системы.
+1. Создает контрольный список файлов эталонной системы.
 2. Создает контрольные суммы из эталонной системы.
-3. Сравнивает эталоные контрольные суммы с проверяемыми.
+3. Сравнивает эталоные контрольные суммы с проверяемыми. Результат записывает в новый список.
 """
-
-OTP_HOME = "/opt/otp"
-TEST_HOME = "/opt"
-string = str
 
 
 def list_dir(direct):
@@ -36,6 +32,24 @@ def list_dir(direct):
     return file_list_path
 
 
+def dict_dir(direct):
+    """
+    Creating manifest-list of files and directories
+    Every string consists of
+    [type-of-object, permissions, os-path, hash-of-file]
+    """
+    file_list_path = dict()
+    for r, d, f in os.walk(direct):
+        dirperm = obj_stats(r)
+        file_list_path[r] = ["d", dirperm, "-"]
+        for file in f:
+            filepath = os.path.join(r, file)
+            fileperm = obj_stats(filepath)
+            filehash = hash_object(filepath)
+            file_list_path[filepath] = ["f", fileperm, filehash]
+    return file_list_path
+
+
 def hash_of_file(filename):
     """
     Get md5 checksum of a file
@@ -45,10 +59,6 @@ def hash_of_file(filename):
         for block in iter(lambda: check_its_hash.read(4096), b""):
             hash_md5.update(block)
     return hash_md5.hexdigest()
-
-
-def hash_compare(original_list, installed_list):
-    return
 
 
 def hash_object(filename, size=-1):
@@ -65,6 +75,7 @@ def hash_object(filename, size=-1):
     .. [1] `Git Tip of the Week: Objects <http://goo.gl/rvfWtM>`
 
     """
+    string = str
     if size == -1:
         size = os.path.getsize(filename)
     object_id = hashlib.sha1()
@@ -80,19 +91,6 @@ def hash_object(filename, size=-1):
     return string(object_id.hexdigest())
 
 
-#def add_hashes(filelist):
-#    """
-#    Enrich manifest list with hashes
-#    """
-#    for f in filelist:
-#        if f[0] != "d":
-#            hash = hash_object(f[2])
-#            f.append(hash)
-#        else:
-#            f.append("-")
-#    return filelist
-
-
 def obj_stats(objpath):
     """
     Get permissions of a file
@@ -101,8 +99,21 @@ def obj_stats(objpath):
     return oct(permiss & 0o777)
 
 
-total_list = list_dir(TEST_HOME)
-
-for i in total_list:
-    print(i)
+def compare_hashes(l_ethalon, l_current):
+    """
+    Compares ethalon manifest file with the current hash checking dictionary
+    :param l_ethalon:
+    :param l_current:
+    :return:
+    """
+    comp_dict = dict()
+    for key in l_ethalon.keys():
+        if l_current[key]:
+            hash_eth = l_ethalon[key][2]
+            hash_cur = l_current[key][2]
+            if hash_eth != hash_cur:
+                comp_dict[key] = {"ethalon": hash_eth, "wrong": hash_cur}
+        else:
+            comp_dictp[key] = "missed file"
+    return comp_dict
 
