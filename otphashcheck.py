@@ -27,27 +27,27 @@ def list_dir(direct):
             filehash = hash_object(filepath)
             filestring = ["f", fileperm, filepath, filehash]
             file_list_path.append(filestring)
-#    for file_path in file_list_path:
-#        print(file_path)
     return file_list_path
 
 
 def dict_dir(direct):
     """
-    Creating manifest-list of files and directories
+    Creating manifest-kvlist of files and directories
     Every string consists of
-    [type-of-object, permissions, os-path, hash-of-file]
+    "os-path": [type-of-object, permissions, hash-of-file]
+    :param direct: string
+    :return: dict
     """
-    file_list_path = dict()
+    file_dict = dict()
     for r, d, f in os.walk(direct):
         dirperm = obj_stats(r)
-        file_list_path[r] = ["d", dirperm, "-"]
+        file_dict[r] = ["d", dirperm, "-"]
         for file in f:
             filepath = os.path.join(r, file)
             fileperm = obj_stats(filepath)
             filehash = hash_object(filepath)
-            file_list_path[filepath] = ["f", fileperm, filehash]
-    return file_list_path
+            file_dict[filepath] = ["f", fileperm, filehash]
+    return file_dict
 
 
 def hash_of_file(filename):
@@ -101,10 +101,10 @@ def obj_stats(objpath):
 
 def compare_hashes(l_ethalon, l_current):
     """
-    Compares ethalon manifest file with the current hash checking dictionary
-    :param l_ethalon:
-    :param l_current:
-    :return:
+    Compares ethalon manifest json dictionary with the current hash checking xdictionary
+    :param l_ethalon: dict
+    :param l_current: dict
+    :return: new dictionary with inconsistent hashes and files
     """
     comp_dict = dict()
     for key in l_ethalon.keys():
@@ -117,3 +117,14 @@ def compare_hashes(l_ethalon, l_current):
             comp_dictp[key] = "missed file"
     return comp_dict
 
+
+def save_manifest(manifest, filepath):
+    """
+    Save a minifest file as a json
+    :param manifest: json dictionary
+    :param filepath: path where to place file
+    :return:
+    """
+    with open(filepath, 'w', encoding='utf_8') as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+    return
