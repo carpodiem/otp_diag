@@ -1,6 +1,7 @@
 import os
 import hashlib
 import io
+import re
 
 """
 Модуль для проверки контрольных сумм (хэш md5).
@@ -30,7 +31,7 @@ def list_dir(direct):
     return file_list_path
 
 
-def dict_dir(direct):
+def dict_dir(direct,excl_list):
     """
     Creating manifest-kvlist of files and directories
     Every string consists of
@@ -40,15 +41,28 @@ def dict_dir(direct):
     """
     file_dict = dict()
     for r, d, f in os.walk(direct):
-        dirperm = obj_stats(r)
-        file_dict[r] = ["d", dirperm, "-"]
-        for file in f:
-            filepath = os.path.join(r, file)
-            fileperm = obj_stats(filepath)
-            filehash = hash_object(filepath)
-            file_dict[filepath] = ["f", fileperm, filehash]
+        if include_dir(r) and not(r in excl_list):
+            dirperm = obj_stats(r)
+            file_dict[r] = ["d", dirperm, "-"]
+            for file in f:
+                filepath = os.path.join(r, file)
+                fileperm = obj_stats(filepath)
+                filehash = hash_object(filepath)
+                file_dict[filepath] = ["f", fileperm, filehash]
     return file_dict
 
+def include_dir(dirpath):
+    """
+    Exclude frequently changing dirs like logs and indexes
+    :param dirpath: string
+    :return: Boolen
+    """
+    condition = True
+    log_dir = re.search("log",dirpath)
+    if log_dir:
+        print(log_dir)
+        condition = False
+    return condition
 
 def hash_of_file(filename):
     """
@@ -108,13 +122,15 @@ def compare_hashes(l_ethalon, l_current):
     """
     comp_dict = dict()
     for key in l_ethalon.keys():
-        if l_current[key]:
-            hash_eth = l_ethalon[key][2]
-            hash_cur = l_current[key][2]
-            if hash_eth != hash_cur:
-                comp_dict[key] = {"ethalon": hash_eth, "wrong": hash_cur}
-        else:
-            comp_dictp[key] = "missed file"
+        try:
+            if l_current[key]:
+                hash_eth = l_ethalon[key][2]
+                hash_cur = l_current[key][2]
+                if hash_eth != hash_cur:
+                    comp_dict[key] = {"ethalon": hash_eth, "wrong": hash_cur}
+            else:
+                comp_dict[key] = "missed file"
+        except KeyError: comp_dict[key] = "missed file"
     return comp_dict
 
 
