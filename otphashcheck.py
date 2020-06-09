@@ -2,6 +2,8 @@ import os
 import hashlib
 import io
 import re
+import configparser
+import json
 
 """
 Модуль для проверки контрольных сумм (хэш md5).
@@ -41,7 +43,7 @@ def dict_dir(direct,excl_list):
     """
     file_dict = dict()
     for r, d, f in os.walk(direct):
-        if include_dir(r) and not(r in excl_list):
+        if include_dir(r, excl_list):
             dirperm = obj_stats(r)
             file_dict[r] = ["d", dirperm, "-"]
             for file in f:
@@ -51,16 +53,19 @@ def dict_dir(direct,excl_list):
                 file_dict[filepath] = ["f", fileperm, filehash]
     return file_dict
 
-def include_dir(dirpath):
+def include_dir(dirpath, list_to_check):
     """
-    Exclude frequently changing dirs like logs and indexes
+    Exclude frequently changing dirs like logs
     :param dirpath: string
     :return: Boolen
     """
     condition = True
+    if dirpath in list_to_check:
+        print("exclude: ", dirpath)
+        return False
     log_dir = re.search("log",dirpath)
     if log_dir:
-        print(log_dir)
+        print("exclude: " + log_dir.string)
         condition = False
     return condition
 
@@ -144,3 +149,12 @@ def save_manifest(manifest, filepath):
     with open(filepath, 'w', encoding='utf_8') as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     return
+
+def create_excl_list(stanza):
+    conf = configparser.ConfigParser()
+    conf.read("otdiag.conf")
+    excl_obj = []
+    excl_obj.append(conf[stanza]["cache"])
+    excl_obj.append(conf[stanza]["indexes"])
+    otp_home = conf[stanza]["OTP_HOME"]
+    return excl_obj, otp_home

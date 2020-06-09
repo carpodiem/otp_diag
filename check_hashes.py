@@ -25,17 +25,17 @@ def correct_dict(dictc):
         dictc2[new_key] = dictc[key]
     return dictc2
 
-def create_excl_list(stanza):
-    conf = configparser.ConfigParser()
-    conf.read("otdiag.conf")
-    excl_obj = []
-    excl_obj.append(conf[stanza]["cache"])
-    excl_obj.append(conf[stanza]["indexes"])
 
-    return excl_obj
+#exclude_list, otp_home = otphashcheck.create_excl_list("otp")
+#manifest_list = otphashcheck.dict_dir(otp_home, exclude_list)
+#manifest_file = otp_home + "/ot_diag/manifest.json"
+#otphashcheck.save_manifest(manifest_list, manifest_file)
+#print(manifest_file)
 
-exclude = create_excl_list("otp")
+exclude, home = otphashcheck.create_excl_list("otp")
 print(exclude)
+print("+++++++++++++++++++")
+print(home)
 dict1 = otphashcheck.dict_dir(TEST_HOME,exclude)
 dict2 = otphashcheck.dict_dir(TEST_HOME2,exclude)
 
@@ -50,5 +50,5 @@ print("++++++++++++++++++++++++ \n")
 
 checked_manifest = otphashcheck.compare_hashes(dict1, correct_dict(dict2))
 pprint(checked_manifest)
-#save_manifest(dict1,"/tmp/otp_manifest.json")
-#save_manifest(checked_manifest,"/tmp/manifest_checking.json")
+save_manifest(dict1,"/tmp/otp_manifest.json")
+save_manifest(checked_manifest,"/tmp/manifest_checking.json")
